@@ -1,0 +1,7 @@
+openai
+elevenlabs
+sounddevice
+scipy
+numpy
+python-dotenv
+rich

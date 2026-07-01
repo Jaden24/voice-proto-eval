@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+_mic_recording_*.wav
+eval/results/*.json
+report/latest_report.md
