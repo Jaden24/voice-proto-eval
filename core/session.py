@@ -8,13 +8,17 @@ Usage:
     python core/session.py --lang ko
 """
 import argparse
+import json
+import os
 import sys
+import time
 
 import stt
 import llm
 import tts
 
 SESSION_MINUTES = 10  # for the daily/monthly cost projection shown at the end
+LOG_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "logs", "sessions.jsonl")
 
 
 def run_session(text: str = None, file_path: str = None, no_tts: bool = False,
@@ -43,13 +47,15 @@ def run_session(text: str = None, file_path: str = None, no_tts: bool = False,
 
     llm_result = llm.get_response(transcript, language_hint=lang or detected_language)
 
+    print(f"\n{llm_result['response_text']}\n")
+
     tts_result = {"char_count": 0, "cost_usd": 0.0, "voice_id": None, "played": False}
-    if no_tts:
-        print(f"\n{llm_result['response_text']}\n")
-    else:
+    if not no_tts:
         tts_result = tts.speak(llm_result["response_text"], language=llm_result["language"])
 
     total_cost = stt_cost + llm_result["cost_usd"] + tts_result["cost_usd"]
+
+    log_session(transcript, detected_language, llm_result, tts_result, total_cost)
 
     return {
         "input_duration": input_duration,
@@ -60,6 +66,24 @@ def run_session(text: str = None, file_path: str = None, no_tts: bool = False,
         "tts_cost": tts_result["cost_usd"],
         "total_cost": total_cost,
     }
+
+
+def log_session(transcript: str, detected_language: str, llm_result: dict, tts_result: dict, total_cost: float):
+    """Append this session's transcript + response to logs/sessions.jsonl for later review."""
+    os.makedirs(os.path.dirname(LOG_PATH), exist_ok=True)
+    entry = {
+        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "transcript": transcript,
+        "detected_language": detected_language,
+        "response_text": llm_result["response_text"],
+        "detected_emotion": llm_result["detected_emotion"],
+        "suggested_action": llm_result["suggested_action"],
+        "risk_flag": llm_result["risk_flag"],
+        "tts_played": tts_result["played"],
+        "total_cost": total_cost,
+    }
+    with open(LOG_PATH, "a", encoding="utf-8") as f:
+        f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
 
 def print_summary(result: dict):

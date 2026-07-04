@@ -4,4 +4,5 @@ __pycache__/
 .env
 _mic_recording_*.wav
 eval/results/*.json
+logs/
 report/latest_report.md

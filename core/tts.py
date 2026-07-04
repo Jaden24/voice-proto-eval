@@ -22,7 +22,7 @@ def speak(text: str, language: str = "en") -> dict:
     cost = round(char_count * COST_PER_CHAR, 6)
 
     if not api_key:
-        print(f"\n[TTS skipped - no API key]\n{text}\n")
+        print("[TTS skipped - no API key]")
         return {"char_count": char_count, "cost_usd": cost, "voice_id": voice_id, "played": False}
 
     import numpy as np
